@@ -149,25 +149,26 @@
 
   <div class="caption" id="cap">
     <h3>A settled patient</h3>
-    <p>The gaps wander up and down, partly in time with breathing. On the plot the dots scatter across a wide band. That spread of dots and the difference between them is heart rate variability.</p>
+    <p>The gaps wander up and down, partly in time with breathing. On the plot the dots scatter across a wide band. That scatter is heart rate variability.</p>
   </div>
 </div>
 
 <section class="copy">
   <h2>Why this matters in intensive care</h2>
   <p>Switch between <strong>Settled</strong> and <strong>Under strain</strong>. The heart rate is identical in both. Only the variability changes, so a heart rate monitor alone would show you nothing. (The number on the right is RMSSD, the usual short-term measure.)</p>
-  <p>Now try <strong>Around a care event</strong>. Turning a patient, suctioning their airway or sitting them on the edge of the bed are routine, but they are physiologically demanding. The heart speeds up and the variability flattens, then both gradually recover once the intervention has stopped.</p>
+  <p>Now try <strong>Around a care event</strong>. Turning a patient, suctioning their airway or sitting them on the edge of the bed are routine, but they are physiologically demanding. The heart speeds up and the variability flattens, then both drift back.</p>
   <p class="pull">How far it drops, and how long it takes to come back, might tell us how well a patient is coping with what we are asking of them.</p>
-  <p>That is the idea this PhD is testing. Before it can be tested, somebody has to map how researchers have measured these changes: what they recorded, over what time periods, and how they handled the things that impact our interpretation. That mapping is the scoping review on the poster.</p>
+  <p>That is the idea this PhD is testing. Before it can be tested, somebody has to map how researchers have actually measured these changes: what they recorded, over what window, and how they handled the things that get in the way. That mapping is the scoping review on the poster.</p>
 </section>
 
 <hr class="rule">
 
 <section class="copy">
-  <h2>Two caveats</h2>
+  <h2>Three honest caveats</h2>
   <ul>
-    <li><strong>These are simulated beats</strong>, not patient data. The patterns are realistic in shape, not derived from any real recordings.</li>
-    <li><strong>Critically ill patients are complicated.</strong> Movement, irregular beats, a ventilator setting the breathing rate, sedatives and beta-blockers all change HRV.</li>
+    <li><strong>These are simulated beats</strong>, not patient data. The patterns are realistic in shape, not drawn from a real recording.</li>
+    <li><strong>Critically ill patients are messier.</strong> Movement, irregular beats, a ventilator setting the breathing rate, sedatives and beta-blockers all change what you see.</li>
+    <li><strong>A drop in variability is not automatically bad.</strong> Distinguishing a normal response to effort from a sign the patient is struggling is exactly the gap in the literature.</li>
   </ul>
 </section>
 
@@ -534,12 +535,39 @@
     btns[k].addEventListener('click', function(){ setMode(k); });
   });
 
-  var playBtn = document.getElementById('play');
-  playBtn.addEventListener('click', function(){
-    running = !running;
+  var playBtn   = document.getElementById('play');
+  var monitorEl = document.querySelector('.monitor');
+  var bigPlay   = null;
+
+  if (monitorEl){
+    var st = document.createElement('style');
+    st.textContent =
+      '.bigplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);'
+    + 'display:none;align-items:center;justify-content:center;padding:15px 32px;'
+    + 'border:none;border-radius:999px;cursor:pointer;background:#FF615C;color:#131D0B;'
+    + "font-family:'Bitter',Georgia,serif;font-weight:700;font-size:20px;line-height:1;"
+    + 'box-shadow:0 6px 26px rgba(0,0,0,.5);z-index:3}'
+    + '.monitor.paused .bigplay{display:flex}'
+    + '.monitor.paused canvas{opacity:.45}';
+    document.head.appendChild(st);
+
+    bigPlay = document.createElement('button');
+    bigPlay.className = 'bigplay';
+    bigPlay.type = 'button';
+    bigPlay.innerHTML = '▶ &nbsp;Play';
+    bigPlay.setAttribute('aria-label', 'Play the animation');
+    monitorEl.appendChild(bigPlay);
+  }
+
+  function setRunning(on){
+    running = on;
     playBtn.textContent = running ? 'Pause' : 'Play';
+    if (monitorEl) monitorEl.className = running ? 'monitor' : 'monitor paused';
     if (running){ lastTs = null; requestAnimationFrame(loop); }
-  });
+  }
+
+  playBtn.addEventListener('click', function(){ setRunning(!running); });
+  if (bigPlay) bigPlay.addEventListener('click', function(){ setRunning(true); });
 
   /* ---------- loop ---------- */
   function loop(ts){
@@ -570,9 +598,8 @@
     updateReadouts();
     drawEcg(); drawTacho();
     if (reduced){
-      running = false;
-      playBtn.textContent = 'Play';
-      document.getElementById('hint').textContent = 'Paused: your device asks for reduced motion. Press play to animate.';
+      setRunning(false);
+      document.getElementById('hint').textContent = 'Paused because this device has Reduce Motion switched on. Tap play to watch it.';
     } else {
       requestAnimationFrame(loop);
     }
